@@ -1,0 +1,44 @@
+{
+  "name": "domdiff",
+  "version": "1.1.0",
+  "description": "Update the DOM in the most efficient way while still using string-based templates.",
+  "main": "src/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "chai": "^1.10.0",
+    "coveralls": "^2.11.2",
+    "es6-promise": "^2.0.1",
+    "istanbul": "^0.3.5",
+    "mocha": "^2.1.0",
+    "mocha-lcov-reporter": "0.0.1",
+    "uglify-js": "^2.4.16",
+    "underscore": "^1.8.3",
+    "xmldom": "^0.1.19"
+  },
+  "scripts": {
+    "minify": "uglifyjs dist/domdiff.js -o dist/domdiff.min.js -m -c",
+    "globalify": "sed 's/module.exports/var domdiff/' src/index.js > dist/domdiff.js",
+    "build": "npm run globalify && npm run minify",
+    "watch": "mocha -wGR nyan",
+    "test-travis": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jesseskinner/domdiff.git"
+  },
+  "keywords": [
+    "asynchronous",
+    "callback",
+    "promises"
+  ],
+  "author": "Jesse Skinner <@JesseSkinner>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jesseskinner/domdiff/issues"
+  },
+  "homepage": "https://github.com/jesseskinner/domdiff"
+}
