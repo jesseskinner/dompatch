@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>domdiff demo</title>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://fb.me/react-0.13.3.min.js"></script>
+<script>
+var Template = React.createClass({
+	render: function () {
+		return React.DOM.div(null, 
+			this.props.now
+		);
+	}
+});
+var data = {
+	now: new Date().toLocaleString()
+};
+
+var root = document.getElementById('root');
+
+function update() {
+	var s = performance.now();
+	React.render(
+		React.createElement(Template, data),
+		root
+	);
+	console.log('fast?', performance.now() - s);
+}
+
+setInterval(function () {
+	data.now = new Date().toLocaleString();
+	update();
+}, 1000);
+
+update();
+</script>
+
+</body>
+</html>

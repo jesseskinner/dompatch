@@ -108,7 +108,7 @@ describe('domdiff', function () {
 
 		document.getElementsByTagName('input')[0].setAttribute('checked', 'checked');
 
-		domdiff(document, newDocument);
+		domdiff(document, newDocument, newDocument);
 
 		var span = document.getElementsByTagName('span')[0];
 		var input = document.getElementsByTagName('input')[0];
