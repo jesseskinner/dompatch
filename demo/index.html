@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>domdiff demo</title>
+</head>
+<body>
+
+<script src="../dist/domdiff.js"></script>
+<script src="../node_modules/underscore/underscore.js"></script>
+<script type="text/html" id="template">
+<h1><%- title %></h1>
+
+<p>What is your name? <input id="name"></p>
+<p>Nice to meet you, <%- name %>!</p>
+<p>What's your favourite colour?
+	<input id="color" style="background:<%- color %>"></p>
+<p>It is currently <%- now %>.</p>
+</script>
+
+<script>
+var template = _.template(document.getElementById('template').innerText);
+var root = document.getElementById('root');
+var data = {
+	title: 'Welcome to the demo!',
+	name: '???',
+	color: 'white',
+	now: '??:??:??'
+};
+
+function update() {
+	var s = performance.now();
+	var dom = new DOMParser().parseFromString(template(data), 'text/html');
+	domdiff(document, dom);
+	console.log('fast?', performance.now() - s);
+
+}
+
+document.addEventListener('keyup', function (event) {
+	if (event.target.id === 'name') {
+		data.name = event.target.value;
+		data.title = 'Welcome to ' + data.name + '\'s world!';
+
+		if (!data.name) {
+			data.title = 'Welcome to the demo!';
+			data.name = '???';
+		}
+	} else if (event.target.id === 'color') {
+		data.color = event.target.value;
+	}
+
+	update();
+});
+
+setInterval(function () {
+	data.now = new Date().toLocaleTimeString();
+	update();
+}, 500);
+
+update();
+</script>
+
+</body>
+</html>
