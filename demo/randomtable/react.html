@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>domdiff demo</title>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://fb.me/react-0.13.3.min.js"></script>
+<script>
+var Template = React.createClass({
+	render: function () {
+		var table = this.props.table;
+		
+		var sortColumns = [];
+
+		for (var j=0;j < 5;j++) {
+			sortColumns.push(
+				React.DOM.th({ 'data-col': j }, 'SORT')
+			);
+		}
+
+		return React.DOM.div(null, 
+			React.DOM.h1(null, 'Random Table'),
+
+			React.DOM.table({ border: 1 },
+				React.DOM.tr(null,
+					sortColumns
+				),
+
+				table.map(function(row, i) {
+					var columns = [];
+
+					for (var j=0;j < 5;j++) {
+						columns.push(
+							React.DOM.td({
+								'data-col': j,
+								'data-row': i
+							}, row[j])
+						);
+					}
+
+					return React.DOM.tr(null, columns);
+				})
+			)
+		);
+	}
+});
+var data = {
+	table: []
+};
+
+for (var i=0;i < 10000;i++) {
+	data.table[i] = [];
+
+	for (var j=0;j < 5;j++) {
+		data.table[i][j] = Math.random();
+	}
+}
+
+var root = document.getElementById('root');
+
+function update() {
+	var s = performance.now();
+	React.render(
+		React.createElement(Template, data),
+		root
+	);
+	console.log('fast?', performance.now() - s);
+}
+
+document.addEventListener('click', function (event) {
+	var td = event.target;
+	var row = +td.getAttribute('data-row'),
+		col = +td.getAttribute('data-col');
+
+	if (td.nodeName === 'TH') {
+		// sort
+		data.table.sort(function (a, b) {
+			return a[col] - b[col];
+		});
+		update();
+		return;
+	}
+
+	if (td.nodeName != 'TD') {
+		return;
+	}
+
+	data.table[row][col] = Math.random();
+	update();
+});
+
+update();
+</script>
+
+</body>
+</html>

@@ -3,12 +3,21 @@ module.exports = (function () {
 
 var diff;
 
-var domStateTest = /^(value|checked|selected)$/i;
-
 function each(list, callback) {
 	for (var i = 0; i < list.length; i++) {
 		callback(list[i], i);
 	}
+}
+
+function haveContentsChanged(before, after) {
+	var beforeHtml = before.innerHTML;
+
+	return (
+		// on server-side, we don't have access to innerHTML
+		// but then, we don't need this optimization either
+		typeof beforeHtml === 'undefined'
+			|| beforeHtml !== after.innerHTML
+	);
 }
 
 function remove(element) {
@@ -22,21 +31,20 @@ function replace(element, newElement) {
 	return remove(element);
 }
 
-function nodeCheck(element, newElement) {
-	if (element.nodeName !== newElement.nodeName
-			|| element.nodeType !== newElement.nodeType) {
+function nodeCheck(element, newElement, compareElement) {
+	if (compareElement.nodeName !== newElement.nodeName
+			|| compareElement.nodeType !== newElement.nodeType) {
 		return replace(element, newElement);
 	}
 }
 
-function attributes(element, newElement) {
-	if (element.setAttribute && element.removeAttribute
-			&& element.attributes && newElement.attributes) {
+function attributes(element, newElement, compareElement) {
+	if (compareElement.setAttribute && compareElement.removeAttribute
+			&& compareElement.attributes && newElement.attributes) {
 
 		// remove any attributes that aren't on the new newElement
-		each(element.attributes, function (attr) {
-			if (!newElement.hasAttribute(attr.name) &&
-					!domStateTest.test(attr.name)) {
+		each(compareElement.attributes, function (attr) {
+			if (!newElement.hasAttribute(attr.name)) {
 				element.removeAttribute(attr.name);
 			}
 		});
@@ -47,67 +55,76 @@ function attributes(element, newElement) {
 	}
 }
 
-function children(element, newElement) {
+function children(element, newElement, compareElement) {
 	var newChildren = newElement.childNodes,
-		childNodes = element.childNodes;
+		childNodes = element.childNodes,
+		compareNodes = compareElement.childNodes,
+		newLength = newChildren ? newChildren.length : 0,
+		compareLength = compareNodes ? compareNodes.length : 0,
+		i;
 
 	if (newChildren) {
 		if (childNodes) {
 			// remove any excess child nodes
-			while (childNodes.length > newChildren.length) {
-				remove(childNodes[childNodes.length - 1]);
+			if (compareLength > newLength) {
+				for (i = compareLength - 1; i >= newLength; i--) {
+					remove(childNodes[i]);
+				}
 			}
 		}
 
-		if (newChildren.length) {
+		if (newLength) {
 			// add any needed child nodes
-			while (childNodes.length < newChildren.length) {
-				element.appendChild(newChildren[childNodes.length].cloneNode(true));
+			if (compareLength < newLength) {
+				for (i = compareLength - 1; i < newLength - 1; i++) {
+					element.appendChild(newChildren[compareLength].cloneNode(true));
+				}
 			}
 
 			// iterate into each child
-			each(newChildren, function (child, i) {
-				diff(childNodes[i], child);
+			each(newChildren, function (child, index) {
+				diff(childNodes[index], child, compareNodes[index]);
 			});
 		}
 	}
 }
 
-function text(element, newElement) {
-	if (element.nodeType === 3) {
+function text(element, newElement, compareElement) {
+	if (compareElement.nodeType === 3) {
 		element.nodeValue = newElement.nodeValue;
 	}
 }
 
-diff = function (element, newElement) {
-	if (!element) {
-		throw new Error('element is required');
-	}
+diff = function (element, newElement, compareElement) {
+	if (element) {
+		if (!newElement) {
+			remove(element);
 
-	if (!newElement) {
-		return remove(element);
-	}
+		} else if (!nodeCheck(element, newElement, compareElement)) {
+			attributes(element, newElement, compareElement);
+			text(element, newElement, compareElement);
 
-	if (!nodeCheck(element, newElement)) {
-		attributes(element, newElement);
-		text(element, newElement);
-		children(element, newElement);
+			if (haveContentsChanged(compareElement, newElement)) {
+				children(element, newElement, compareElement);
+			}
+		}
 	}
 };
 
 function rootNode(document) {
-	if (document.body) {
-		return document.body;
-	}
-	return document;
+	return document.body || document;
 }
 
-function domdiff(document, newDocument) {
+function domdiff(document, newDocument, compareDocument) {
 	// update document.title as a special other thing
 	document.title = newDocument.title;
 
 	// find root elements (eg. body) we can start iterating into
-	diff(rootNode(document), rootNode(newDocument));
+	diff(
+		rootNode(document),
+		rootNode(newDocument),
+		rootNode(compareDocument || document)
+	);
 }
 
 return domdiff;
