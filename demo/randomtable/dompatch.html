@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>dompatch demo</title>
+</head>
+<body>
+
+<div id="log" style="position:fixed;top:0;right:0;font-size:200%"></div>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+
+<script src="../../dist/dompatch.js"></script>
+
+<script type="text/html" id="template">
+<h1>Random Table</h1>
+
+<table border="1">
+	<tr>
+		<% for (var j=0;j < 5;j++) { %>
+			<th data-col="<%- j %>">SORT</th>
+		<% } %>
+	</tr>
+	<%= table.map(function (row, i) {
+			return Row(row, i)
+		}).join('')
+	%>
+</table>
+</script>
+
+<script type="text/html" id="row">
+<tr data-row="<%- i %>">
+	<% for (var j=0;j < 5;j++) { %>
+		<td data-col="<%- j %>" data-row="<%- i %>"><%- row[j] %></td>
+	<% } %>
+</tr>
+</script>
+
+<script>
+var template = _.template(document.getElementById('template').innerHTML.trim());
+var rowTemplate = _.template(document.getElementById('row').innerHTML.trim());
+
+var log = document.getElementById('log');
+var root = document.getElementById('root');
+var dom = root.cloneNode();
+
+var data = {
+	table: []
+};
+
+var NO_UPDATE = '<!--NOUPDATE-->';
+
+function Row(row, index) {
+	function hasRowChanged(oldRow, newRow) {
+		return (
+			oldRow[0] !== newRow[0] ||
+			oldRow[1] !== newRow[1] ||
+			oldRow[2] !== newRow[2] ||
+			oldRow[3] !== newRow[3] ||
+			oldRow[4] !== newRow[4]
+		);
+	}
+
+	if (Row.data[index] && !hasRowChanged(Row.data[index], row)) {
+		return NO_UPDATE;
+	}
+
+	// remember so we can compare next time
+	Row.data[index] = row;
+
+	return rowTemplate({ row: row, i: index });
+}
+
+// initialize for keeping track of changes
+Row.data = [];
+
+for (var i = 0; i < 10000; i++) {
+	data.table[i] = [];
+
+	for (var j = 0; j < 5; j++) {
+		data.table[i][j] = Math.random();
+	}
+}
+
+function update() {
+	var s = performance.now();
+
+	var html = template(data);
+
+	dom.innerHTML = html;
+
+	dompatch(root, dom, {
+		shouldUpdate: function (before, after) {
+			// skip all comments like <!--NOUPDATE-->
+			return after.nodeType !== 8 || after.nodeValue !== 'NOUPDATE';
+		}
+	});
+
+	log.innerHTML = 'Render speed: ' + (performance.now() - s) + 'ms';
+}
+
+document.addEventListener('click', function (event) {
+	var td = event.target;
+	var row = +td.getAttribute('data-row'),
+		col = +td.getAttribute('data-col');
+
+	if (td.nodeName === 'TH') {
+		// sort
+		data.table.sort(function (a, b) {
+			return a[col] - b[col];
+		});
+		update();
+		return;
+	}
+
+	if (td.nodeName != 'TD') {
+		return;
+	}
+
+	data.table[row] = data.table[row].slice(0);
+	data.table[row][col] = Math.random();
+	update();
+});
+
+update();
+</script>
+
+</body>
+</html>

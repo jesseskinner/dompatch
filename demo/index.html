@@ -2,20 +2,28 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>domdiff demo</title>
+	<title>dompatch demo</title>
 </head>
 <body>
 
-<script src="../dist/domdiff.js"></script>
+<script src="../dist/dompatch.js"></script>
 <script src="../node_modules/underscore/underscore.js"></script>
 <script type="text/html" id="template">
 <h1><%- title %></h1>
 
 <p>What is your name? <input id="name"></p>
 <p>Nice to meet you, <%- name %>!</p>
+
+<!-- Comments are OK too, right <%- name %>? -->
+
 <p>What's your favourite colour?
 	<input id="color" style="background:<%- color %>"></p>
 <p>It is currently <%- now %>.</p>
+
+<textarea>Dear <%- name %>,
+
+...
+</textarea>
 </script>
 
 <script>
@@ -28,12 +36,21 @@ var data = {
 	now: '??:??:??'
 };
 
+var lastUpdate;
+
 function update() {
 	var s = performance.now();
-	var dom = new DOMParser().parseFromString(template(data), 'text/html');
-	domdiff(document, dom);
-	console.log('fast?', performance.now() - s);
 
+	// render the DOM with the template HTML
+	var dom = new DOMParser().parseFromString(template(data), 'text/html');
+
+	// patch the actual DOM
+	dompatch(document, dom, lastUpdate);
+
+	// keep track to compare against next time
+	lastUpdate = dom;
+
+	console.log('fast?', performance.now() - s);
 }
 
 document.addEventListener('keyup', function (event) {

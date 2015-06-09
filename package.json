@@ -1,7 +1,7 @@
 {
-  "name": "domdiff",
+  "name": "dompatch",
   "version": "1.1.0",
-  "description": "Update the DOM in the most efficient way while still using string-based templates.",
+  "description": "Patch the DOM in the most efficient way while still using string-based templates.",
   "main": "src/index.js",
   "directories": {
     "test": "test"
@@ -19,8 +19,8 @@
     "xmldom": "^0.1.19"
   },
   "scripts": {
-    "minify": "uglifyjs dist/domdiff.js -o dist/domdiff.min.js -m -c",
-    "globalify": "sed 's/module.exports/var domdiff/' src/index.js > dist/domdiff.js",
+    "minify": "uglifyjs dist/dompatch.js -o dist/dompatch.min.js -m -c",
+    "globalify": "sed 's/module.exports/var dompatch/' src/index.js > dist/dompatch.js",
     "build": "npm run globalify && npm run minify",
     "watch": "mocha -wGR nyan",
     "test-travis": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
@@ -28,7 +28,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jesseskinner/domdiff.git"
+    "url": "https://github.com/jesseskinner/dompatch.git"
   },
   "keywords": [
     "asynchronous",
@@ -38,7 +38,7 @@
   "author": "Jesse Skinner <@JesseSkinner>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jesseskinner/domdiff/issues"
+    "url": "https://github.com/jesseskinner/dompatch/issues"
   },
-  "homepage": "https://github.com/jesseskinner/domdiff"
+  "homepage": "https://github.com/jesseskinner/dompatch"
 }

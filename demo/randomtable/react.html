@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>domdiff demo</title>
+	<title>react demo</title>
 </head>
 <body>
 
+<div id="log" style="position:fixed;top:0;right:0;font-size:200%"></div>
 <div id="root"></div>
 
 <script src="https://fb.me/react-0.13.3.min.js"></script>
@@ -31,23 +32,45 @@ var Template = React.createClass({
 				),
 
 				table.map(function(row, i) {
-					var columns = [];
-
-					for (var j=0;j < 5;j++) {
-						columns.push(
-							React.DOM.td({
-								'data-col': j,
-								'data-row': i
-							}, row[j])
-						);
-					}
-
-					return React.DOM.tr(null, columns);
+					return React.createElement(Row, { row: row, i: i });
 				})
 			)
 		);
 	}
 });
+
+var Row = React.createClass({
+	shouldComponentUpdate: function (newProps) {
+		var row = this.props.row, newRow = newProps.row;
+
+		return (
+			row[0] !== newRow[0] ||
+			row[1] !== newRow[1] ||
+			row[2] !== newRow[2] ||
+			row[3] !== newRow[3] ||
+			row[4] !== newRow[4]
+		);
+	},
+
+	render: function () {
+		var i = this.props.i;
+		var row = this.props.row;
+
+		var columns = [];
+
+		for (var j=0;j < 5;j++) {
+			columns.push(
+				React.DOM.td({
+					'data-col': j,
+					'data-row': i
+				}, row[j])
+			);
+		}
+
+		return React.DOM.tr(null, columns);
+	}
+});
+
 var data = {
 	table: []
 };
@@ -61,14 +84,17 @@ for (var i=0;i < 10000;i++) {
 }
 
 var root = document.getElementById('root');
+var log = document.getElementById('log');
 
 function update() {
 	var s = performance.now();
+
 	React.render(
 		React.createElement(Template, data),
 		root
 	);
-	console.log('fast?', performance.now() - s);
+
+	log.innerHTML = 'Render speed: ' + (performance.now() - s) + 'ms';
 }
 
 document.addEventListener('click', function (event) {
@@ -88,6 +114,9 @@ document.addEventListener('click', function (event) {
 	if (td.nodeName != 'TD') {
 		return;
 	}
+
+	// make a copy or else shouldComponentUpdate won't have the old one
+	data.table[row] = data.table[row].slice(0);
 
 	data.table[row][col] = Math.random();
 	update();
