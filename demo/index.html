@@ -45,7 +45,9 @@ function update() {
 	var dom = new DOMParser().parseFromString(template(data), 'text/html');
 
 	// patch the actual DOM
-	dompatch(document, dom, lastUpdate);
+	dompatch(document, dom, {
+		compare: lastUpdate
+	});
 
 	// keep track to compare against next time
 	lastUpdate = dom;
