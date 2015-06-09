@@ -1,6 +1,6 @@
 {
   "name": "dompatch",
-  "version": "1.1.0",
+  "version": "0.0.1",
   "description": "Patch the DOM in the most efficient way while still using string-based templates.",
   "main": "src/index.js",
   "directories": {
