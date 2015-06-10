@@ -14,19 +14,21 @@
 <script src="../../dist/dompatch.js"></script>
 
 <script type="text/html" id="template">
-<h1>Random Table</h1>
+<div id="root">
+	<h1>Random Table</h1>
 
-<table border="1">
-	<tr>
-		<% for (var j=0;j < 5;j++) { %>
-			<th data-col="<%- j %>">SORT</th>
-		<% } %>
-	</tr>
-	<%= table.map(function (row, i) {
-			return Row(row, i)
-		}).join('')
-	%>
-</table>
+	<table border="1">
+		<tr>
+			<% for (var j=0;j < 5;j++) { %>
+				<th data-col="<%- j %>">SORT</th>
+			<% } %>
+		</tr>
+		<%= table.map(function (row, i) {
+				return Row(row, i)
+			}).join('')
+		%>
+	</table>
+</div>
 </script>
 
 <script type="text/html" id="row">
@@ -88,12 +90,12 @@ function update() {
 
 	var html = template(data);
 
-	dom.innerHTML = html;
+	dom = new DOMParser().parseFromString(html, 'text/html');
 
-	dompatch(root, dom, {
+	dompatch(root, dom.body.firstChild, {
 		shouldUpdate: function (before, after) {
-			// skip all comments like <!--NOUPDATE-->
-			return after.nodeType !== 8 || after.nodeValue !== 'NOUPDATE';
+			// skip all comments ie. <!--NOUPDATE-->
+			return after.nodeType !== 8;
 		}
 	});
 

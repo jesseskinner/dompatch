@@ -2,7 +2,10 @@ module.exports = function (undefined) {
 
 function patch(element, newElement, compareElement, options,
 	// local variables
-	i, content, newNodes, compareNodes, newLength, compareLength, name, attrs) {
+	i, content, name, value,
+	newAttrs, compareAttrs,
+	newNodes, compareNodes, elementNodes,
+	newLength, compareLength) {
 
 	// allow hook to prevent doing anything on these nodes
 	if (!options.shouldUpdate || options.shouldUpdate(compareElement, newElement)) {
@@ -16,71 +19,84 @@ function patch(element, newElement, compareElement, options,
 
 		// update node value, if a text or comment node
 		} else if (content === 3 || content === 8) {
-			element.nodeValue = newElement.nodeValue;
+			value = newElement.nodeValue
+
+			if (compareElement.nodeValue !== value) {
+				element.nodeValue = value;
+			}
 
 		} else {
 
-			// update attributes, if a dom node
-			if (content === 1) {
-				attrs = {};
-				newNodes = newElement.attributes;
-				compareNodes = compareElement.attributes;
+			// fetch this stuff all at once to avoid recalculation
+			newAttrs = domToArray(newElement.attributes);
+			compareAttrs = domToArray(compareElement.attributes);
 
-				// copy the attributes over to an object for comparison
-				for (i = compareNodes.length - 1; i >= 0; i--) {
-					content = compareNodes[i];
-					attrs[content.name] = content.value;
+			newNodes = domToArray(newElement.childNodes);
+			compareNodes = domToArray(compareElement.childNodes);
+			elementNodes = domToArray(element.childNodes);
+
+			// next, iterate over existing children
+			for (i = Math.min(compareNodes.length, newNodes.length) - 1; i >= 0; i--) {
+				patch(elementNodes[i], newNodes[i], compareNodes[i], options);
+			}
+
+			// remove any excess child nodes
+			if (compareNodes.length > newNodes.length) {
+				for (i = compareNodes.length - 1; i >= newNodes.length; i--) {
+					element.removeChild(elementNodes[i]);
+				}
+			}
+
+			// copy over any new child nodes
+			if (compareNodes.length < newNodes.length) {
+				for (i = compareNodes.length; i < newNodes.length; i++) {
+					element.appendChild(newNodes[i].cloneNode(true));
+				}
+			}
+
+			// patch attributes
+			if (newAttrs) {
+				// remove outdated attributes
+				for (i = compareAttrs.length - 1; i >= 0; i--) {
+					name = compareAttrs[i].name;
+
+					if (getAttribute(newAttrs, name) === undefined) {
+						element.removeAttribute(name);
+					}
 				}
 
-				for (i = newNodes.length - 1; i >= 0; i--) {
-					content = newNodes[i];
+				// update or add attributes
+				for (i = newAttrs.length - 1; i >= 0; i--) {
+					content = newAttrs[i];
 					name = content.name;
-					content = content.value;
+					value = content.value;
 
-					// if the value is different, update
-					if (attrs[name] !== content) {
-						element.setAttribute(name, content);
-					}
-
-					// remove from list
-					delete attrs[name];
-				}
-
-				// remove all the attributes remaining
-				for (name in attrs) {
-					element.removeAttribute(name);
-				}
-			}
-
-			// allow hook to prevent iterating into the children
-			if (!options.shouldChildrenUpdate ||
-					options.shouldChildrenUpdate(compareElement, newElement)) {
-
-				// update children
-				newNodes = newElement.childNodes;
-				compareNodes = compareElement.childNodes;
-				newLength = newNodes ? newNodes.length : 0;
-				compareLength = compareNodes ? compareNodes.length : 0;
-
-				// remove any excess child nodes
-				if (compareLength > newLength) {
-					for (i = compareLength - 1; i >= newLength; i--) {
-						element.removeChild(element.childNodes[i]);
-					}
-				}
-
-				// iterate over existing children
-				for (i = 0; i < Math.min(compareLength, newLength); i++) {
-					patch(element.childNodes[i], newNodes[i], compareNodes[i], options);
-				}
-
-				// copy over any new child nodes
-				if (compareLength < newLength) {
-					for (i = compareLength; i < newLength; i++) {
-						element.appendChild(newNodes[i].cloneNode(true));
+					if (getAttribute(compareAttrs, name) !== value) {
+						element.setAttribute(name, value);
 					}
 				}
 			}
+		}
+	}
+}
+
+// the theory goes, it's expensive to get dom list entries, so we'll get them all at once
+function domToArray(dom) {
+	if (dom) {
+		var arr = [], value, index = 0;
+
+		while (value = dom[index]) {
+			arr[index++] = value;
+		}
+
+		return arr;
+	}
+}
+
+function getAttribute (attrs, name) {
+	for (var i = attrs.length - 1; i >= 0; i--) {
+		if (attrs[i].name === name) {
+			return attrs[i].value;
 		}
 	}
 }
