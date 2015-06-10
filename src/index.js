@@ -62,25 +62,22 @@ function patch(element, newElement, compareElement, options,
 				newLength = newNodes ? newNodes.length : 0;
 				compareLength = compareNodes ? compareNodes.length : 0;
 
-				// but only if the new node even has a childNodes property
-				if (newNodes) {
-					// remove any excess child nodes
-					if (compareLength > newLength) {
-						for (i = compareLength - 1; i >= newLength; i--) {
-							element.removeChild(element.childNodes[i]);
-						}
+				// remove any excess child nodes
+				if (compareLength > newLength) {
+					for (i = compareLength - 1; i >= newLength; i--) {
+						element.removeChild(element.childNodes[i]);
 					}
+				}
 
-					// iterate over existing children
-					for (i = 0; i < Math.min(compareLength, newLength); i++) {
-						patch(element.childNodes[i], newNodes[i], compareNodes[i], options);
-					}
+				// iterate over existing children
+				for (i = 0; i < Math.min(compareLength, newLength); i++) {
+					patch(element.childNodes[i], newNodes[i], compareNodes[i], options);
+				}
 
-					// copy over any new child nodes
-					if (compareLength < newLength) {
-						for (i = compareLength; i < newLength; i++) {
-							element.appendChild(newNodes[i].cloneNode(true));
-						}
+				// copy over any new child nodes
+				if (compareLength < newLength) {
+					for (i = compareLength; i < newLength; i++) {
+						element.appendChild(newNodes[i].cloneNode(true));
 					}
 				}
 			}
