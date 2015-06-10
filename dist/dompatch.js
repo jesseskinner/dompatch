@@ -1,41 +1,55 @@
 var dompatch = function (undefined) {
 
-function patch(element, newElement, compareElement, options) {
-	// reusable iteration variables
-	var i, content;
+function patch(element, newElement, compareElement, options,
+	// local variables
+	i, content, newNodes, compareNodes, newLength, compareLength, name, attrs) {
 
 	// allow hook to prevent doing anything on these nodes
 	if (!options.shouldUpdate || options.shouldUpdate(compareElement, newElement)) {
+		content = newElement.nodeType;
 
 		// if the node name or type changed, just replace this node
-		if (compareElement.nodeName !== newElement.nodeName
-				|| compareElement.nodeType !== newElement.nodeType) {
+		if (compareElement.nodeType !== content
+				|| compareElement.nodeName !== newElement.nodeName) {
 
 			element.parentNode.replaceChild(newElement.cloneNode(true), element);
 
-		// otherwise, update this node
+		// update node value, if a text or comment node
+		} else if (content === 3 || content === 8) {
+			element.nodeValue = newElement.nodeValue;
+
 		} else {
-			// update attributes, if appropriate
-			if (newElement.attributes) {
 
-				// remove any attributes that aren't on the new newElement
-				for (i = 0; i < compareElement.attributes.length; i++) {
-					content = compareElement.attributes[i];
+			// update attributes, if a dom node
+			if (content === 1) {
+				attrs = {};
+				newNodes = newElement.attributes;
+				compareNodes = compareElement.attributes;
 
-					if (!newElement.hasAttribute(content.name)) {
-						element.removeAttribute(content.name);
+				// copy the attributes over to an object for comparison
+				for (i = compareNodes.length - 1; i >= 0; i--) {
+					content = compareNodes[i];
+					attrs[content.name] = content.value;
+				}
+
+				for (i = newNodes.length - 1; i >= 0; i--) {
+					content = newNodes[i];
+					name = content.name;
+					content = content.value;
+
+					// if the value is different, update
+					if (attrs[name] !== content) {
+						element.setAttribute(name, content);
 					}
+
+					// remove from list
+					delete attrs[name];
 				}
 
-				for (i = 0; i < newElement.attributes.length; i++) {
-					content = newElement.attributes[i];
-					element.setAttribute(content.name, content.value);
+				// remove all the attributes remaining
+				for (name in attrs) {
+					element.removeAttribute(name);
 				}
-			}
-
-			// update node value, if a text or comment node
-			if (newElement.nodeType === 3 || newElement.nodeType === 8) {
-				element.nodeValue = newElement.nodeValue;
 			}
 
 			// allow hook to prevent iterating into the children
@@ -43,13 +57,13 @@ function patch(element, newElement, compareElement, options) {
 					options.shouldChildrenUpdate(compareElement, newElement)) {
 
 				// update children
-				var newChildren = newElement.childNodes,
-					compareNodes = compareElement.childNodes,
-					newLength = newChildren ? newChildren.length : 0,
-					compareLength = compareNodes ? compareNodes.length : 0;
+				newNodes = newElement.childNodes;
+				compareNodes = compareElement.childNodes;
+				newLength = newNodes ? newNodes.length : 0;
+				compareLength = compareNodes ? compareNodes.length : 0;
 
 				// but only if the new node even has a childNodes property
-				if (newChildren) {
+				if (newNodes) {
 					// remove any excess child nodes
 					if (compareLength > newLength) {
 						for (i = compareLength - 1; i >= newLength; i--) {
@@ -59,13 +73,13 @@ function patch(element, newElement, compareElement, options) {
 
 					// iterate over existing children
 					for (i = 0; i < Math.min(compareLength, newLength); i++) {
-						patch(element.childNodes[i], newChildren[i], compareNodes[i], options);
+						patch(element.childNodes[i], newNodes[i], compareNodes[i], options);
 					}
 
 					// copy over any new child nodes
 					if (compareLength < newLength) {
 						for (i = compareLength; i < newLength; i++) {
-							element.appendChild(newChildren[i].cloneNode(true));
+							element.appendChild(newNodes[i].cloneNode(true));
 						}
 					}
 				}
