@@ -118,4 +118,15 @@ describe('dompatch', function () {
 		expect(span.childNodes[0].nodeValue).to.equal('bye');
 		expect(input.getAttribute('checked')).to.equal('checked');
 	});
+
+	it('can use id argument of children to re-arrange intelligently', function () {
+		var document = doc('<div><p id="one"><input></p><p id="two"></p></div>');
+		var newDocument = doc('<div><p id="two"></p><p id="one"><input></p></div>');
+
+		document.getElementsByTagName('input')[0].value = 'test';
+
+		dompatch(document, newDocument);
+
+		expect(document.getElementsByTagName('input')[0].value).to.equal('test');
+	});
 });
