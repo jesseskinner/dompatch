@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>dompatch demo</title>
+</head>
+<body>
+
+<script src="../../dist/dompatch.js"></script>
+
+<script>
+function template() {
+	return (
+		(Math.random() < 0.5 ? 'I am randomly here<br>' : '') +
+		'<textarea></textarea>'
+	);
+}
+
+function update() {
+	var s = performance.now();
+	var dom = new DOMParser().parseFromString(template(), 'text/html');
+	dompatch(document, dom);
+	console.log('fast?', performance.now() - s);
+}
+
+setInterval(function () {
+	update();
+}, 500);
+
+update();
+</script>
+
+</body>
+</html>
