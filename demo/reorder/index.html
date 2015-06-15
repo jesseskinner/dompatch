@@ -11,21 +11,33 @@
 <script>
 function template() {
 	return (
-		(Math.random() < 0.5 ? 'I am randomly here<br>' : '') +
-		'<textarea></textarea>'
+		(Math.random() < 0.33 ? '<p id="boo1">boo!</p>' : '') +
+		'<textarea style="background:' + (Math.random() < 0.5 ? 'yellow' : 'beige') + '"></textarea>' +
+		(Math.random() < 0.33 ? '<p id="boo2">boo!</p>' : '') +
+		'<p id="footer">&copy; 1994</p>' +
+		(Math.random() < 0.33 ? '<p id="boo3">boo!</p>' : '')
 	);
 }
 
+var lastDom;
+
 function update() {
 	var s = performance.now();
-	var dom = new DOMParser().parseFromString(template(), 'text/html');
-	dompatch(document, dom);
+	var html = template();
+	
+	var dom = new DOMParser().parseFromString(html, 'text/html');
+	dompatch(document, dom, {
+		compare: lastDom
+	});
+
+	lastDom = dom;
+
 	console.log('fast?', performance.now() - s);
 }
 
 setInterval(function () {
 	update();
-}, 500);
+}, 2000);
 
 update();
 </script>

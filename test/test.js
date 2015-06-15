@@ -17,11 +17,11 @@ describe('dompatch', function () {
 		var document = doc('<div></div>'),
 			div = document.getElementsByTagName('div')[0],
 
-			newDocument = doc('<div id="yay" style="color:red"></div>');
+			newDocument = doc('<div class="yay" style="color:red"></div>');
 
 		dompatch(document, newDocument);
 
-		expect(div.getAttribute('id')).to.equal('yay');
+		expect(div.getAttribute('class')).to.equal('yay');
 		expect(div.getAttribute('style')).to.equal('color:red');
 	});
 
@@ -38,7 +38,7 @@ describe('dompatch', function () {
 
 	it('can handle fewer children', function () {
 		var document = doc('<div><br><br></div>');
-		var newDocument = doc('<div><br></div>');
+		var newDocument = doc('<div><br></div>'); 
 
 		dompatch(document, newDocument);
 

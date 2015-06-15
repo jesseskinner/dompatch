@@ -12,8 +12,7 @@ function patch(element, newElement, compareElement, options,
 		content = newElement.nodeType;
 
 		// if the node name or type changed, just replace this node
-		if (compareElement.nodeType !== content
-				|| compareElement.nodeName !== newElement.nodeName) {
+		if (!same(compareElement, newElement)) {
 
 			element.parentNode.replaceChild(newElement.cloneNode(true), element);
 
@@ -34,24 +33,55 @@ function patch(element, newElement, compareElement, options,
 			newNodes = domToArray(newElement.childNodes);
 			compareNodes = domToArray(compareElement.childNodes);
 			elementNodes = domToArray(element.childNodes);
+			var oldNodeLength = compareNodes.length;
+			var newNodeLength = newNodes.length;
 
-			// next, iterate over existing children
-			for (i = Math.min(compareNodes.length, newNodes.length) - 1; i >= 0; i--) {
-				patch(elementNodes[i], newNodes[i], compareNodes[i], options);
-			}
+			// reorder the children so they're all the same type/tag/id
+			for (i = 0; i < newNodeLength; i++) {
+				if (i >= elementNodes.length || !same(compareNodes[i], newNodes[i], options)) {
+					var node = undefined;
 
-			// remove any excess child nodes
-			if (compareNodes.length > newNodes.length) {
-				for (i = compareNodes.length - 1; i >= newNodes.length; i--) {
-					element.removeChild(elementNodes[i]);
+					// remove all the siblings that aren't the same
+					for (j = i + 1; j < elementNodes.length;j++) {
+						content = elementNodes[j];
+
+						if (same(content, newNodes[i])) {
+							node = content;
+
+							// remove all the nodes until here
+							for (k = j - 1; k >= i; k--) {
+								element.removeChild(elementNodes[k]);
+							}
+
+							elementNodes.splice(i, j - i);
+							compareNodes.splice(i, j - i);
+
+							break;
+						}
+					}
+
+					// if nothing was the same, clone the new node to use instead
+					if (!node) {
+						node = newNodes[i].cloneNode(true);
+
+						if (i >= element.childNodes.length) {
+							element.appendChild(node);
+						} else {
+							element.insertBefore(node, element.childNodes[i]);
+						}
+
+						// adjust the entry numbers to match the inserted element
+						elementNodes.splice(i, 0, null);
+						compareNodes.splice(i, 0, null);
+					}
+
+				} else {
+					patch(elementNodes[i], newNodes[i], compareNodes[i], options);
 				}
 			}
 
-			// copy over any new child nodes
-			if (compareNodes.length < newNodes.length) {
-				for (i = compareNodes.length; i < newNodes.length; i++) {
-					element.appendChild(newNodes[i].cloneNode(true));
-				}
+			for (i = elementNodes.length - 1; i >= newNodeLength; i--) {
+				element.removeChild(elementNodes[i]);
 			}
 
 			// patch attributes
@@ -78,6 +108,26 @@ function patch(element, newElement, compareElement, options,
 			}
 		}
 	}
+}
+
+function same (before, after, options) {
+	if (options && options.shouldUpdate && !options.shouldUpdate(before, after)) {
+		return true;
+	}
+
+	// different type or tag, definitely not the same
+	if (before.nodeType !== after.nodeType
+		|| before.nodeName !== after.nodeName) {
+		return false;
+	}
+
+	// different id (if available), then not the same
+	if (before.getAttribute && after.getAttribute) {
+		return before.getAttribute('id') === after.getAttribute('id');
+	}
+
+	// got here, must be the same
+	return true;
 }
 
 // the theory goes, it's expensive to get dom list entries, so we'll get them all at once
