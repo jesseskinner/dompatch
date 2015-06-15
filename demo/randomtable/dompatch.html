@@ -32,7 +32,7 @@
 </script>
 
 <script type="text/html" id="row">
-<tr data-row="<%- i %>">
+<tr data-row="<%- i %>" id="<%- row[0] %>">
 	<% for (var j=0;j < 5;j++) { %>
 		<td data-col="<%- j %>" data-row="<%- i %>"><%- row[j] %></td>
 	<% } %>

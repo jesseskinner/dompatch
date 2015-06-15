@@ -3,6 +3,15 @@
 <head>
 	<meta charset="UTF-8">
 	<title>dompatch demo</title>
+	<style type="text/css">
+		.on { background: black; color: white; }
+		.off { background: white; color: black; }
+		textarea {
+			width: 300px;
+			height: 150px;
+			font-size: 300%;
+		}
+	</style>
 </head>
 <body>
 
@@ -11,15 +20,15 @@
 <script>
 function template() {
 	return (
-		(Math.random() < 0.33 ? '<p id="boo1">boo!</p>' : '') +
-		'<textarea style="background:' + (Math.random() < 0.5 ? 'yellow' : 'beige') + '"></textarea>' +
-		(Math.random() < 0.33 ? '<p id="boo2">boo!</p>' : '') +
-		'<p id="footer">&copy; 1994</p>' +
-		(Math.random() < 0.33 ? '<p id="boo3">boo!</p>' : '')
+		'<title>' + (new Date).toLocaleString() + '</title>' +
+		'<ol>' +
+			'<li>' + Math.round(frames / ((performance.now() - start) / 1000)) + ' fps</li>' +
+			'<li>&copy; ' + (Math.random() + 1994) + '</li>' +
+		(Math.random() < 0.05 ? '<li id="random">' + Math.random() + '</li>' : '') +
+		'<li id="edit"><textarea></textarea></li>' +
+		(Math.random() < 0.33 ? '<li id="boo">boo!</li>' : '')
 	);
 }
-
-var lastDom;
 
 function update() {
 	var s = performance.now();
@@ -27,19 +36,32 @@ function update() {
 	
 	var dom = new DOMParser().parseFromString(html, 'text/html');
 	dompatch(document, dom, {
-		compare: lastDom
+		compare: lastDom,
+		shouldUpdate: function  (element, name, value) {
+			if (element.nodeName === 'TEXTAREA') {
+				return false;
+			}
+			return true;
+		}
 	});
 
 	lastDom = dom;
-
-	console.log('fast?', performance.now() - s);
+	frames++;
+	//console.log(//'fast?', performance.now() - s, 'ms', 
+		//);
 }
+var frames = 0,
+	start = performance.now(),
+	lastDom;
+
 
 setInterval(function () {
 	update();
-}, 2000);
+}, 10);
 
 update();
+
+document.querySelector('textarea').focus();
 </script>
 
 </body>
